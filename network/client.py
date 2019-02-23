@@ -1,12 +1,13 @@
 import socket,json,threading,time
 from network.message import send_auth,send_message
-
+from network.DataHandler import DataHandler
 
 class Client():
 
     def __init__(self,username,password):
         self.auth = (username,password)
         self.connect_success = False
+        self.data_handler = DataHandler()
 
     def connect(self,host = None,port = 9088):
         s = socket.socket()
@@ -19,11 +20,13 @@ class Client():
 
         def server_connection(s: socket.socket):
             while True:
-                data = s.recv(1024).decode('utf-8')
-                print('\n[{}]接收到服务器的数据:'.format(self.auth[0]), data)
-                message_object = json.loads(data)
-                if message_object['a'] == 'message':
-                    print('[{}]说:{}'.format(message_object['from_uid'],message_object['message']))
+                data = s.recv(1024)
+                self.data_handler.push(data)
+                for data in self.data_handler.get_datas():
+                    print('\n[{}]接收到服务器的数据:'.format(self.auth[0]), data)
+                    message_object = (data)
+                    if message_object['a'] == 'message':
+                        print('[{}]说:{}'.format(message_object['from_uid'],message_object['message']))
 
         # 启动监听服务器消息的线程
         server_thread = threading.Thread(target=server_connection, args=(s,))
@@ -57,6 +60,8 @@ time.sleep(3)
 t1.send_message(message='你好',to_uid='test2')
 time.sleep(3)
 t1.send_message(message='在吗?',to_uid='test2')
+t1.send_message(message='在吗1?',to_uid='test2')
+t1.send_message(message='在吗2?',to_uid='test2')
 
 
 while True:
