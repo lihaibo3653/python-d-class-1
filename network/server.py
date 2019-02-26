@@ -31,7 +31,10 @@ def client_connection(c,addr):
     data_hanlder = DataHandler()
     local_connection_uid = None
     while True:
-        data = c.recv(1024)
+        try:
+            data = c.recv(1024)
+        except ConnectionResetError as error:
+            print('客户端关闭:',addr)
         if data:
             #data = data.decode('utf-8')
             print('接收到客户的data:',data)
@@ -43,6 +46,8 @@ def client_connection(c,addr):
                 client_method = client_methods.get(a,None)
                 if client_method:
                     client_method()
+                if a == 'heartbeat':
+                    print('接收到心跳包：',addr)
                 if a == 'message':
                     #处理用户消息转发
                     to_uid = client_message_object['to_uid']
@@ -63,6 +68,7 @@ def client_connection(c,addr):
                         print('验证不通过')
 
         else:
+            print('客户端关闭')
             break
 
 while True:
