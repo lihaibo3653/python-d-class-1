@@ -1,5 +1,5 @@
 import socket,json,threading,time
-from network.message import send_auth,send_message
+from network.message import send_auth,send_message,send_heartbeat
 from network.DataHandler import DataHandler
 
 class Client():
@@ -8,6 +8,15 @@ class Client():
         self.auth = (username,password)
         self.connect_success = False
         self.data_handler = DataHandler()
+
+    def heartbeat(self):
+        def send_heartbeat_func(t):
+            while True:
+                time.sleep(5)
+                send_heartbeat(s = self.connection,time = time.time())
+
+        self.heartbeat_timer = threading.Thread(target=send_heartbeat_func,args=(5,))
+        self.heartbeat_timer.start()
 
     def connect(self,host = None,port = 9088):
         s = socket.socket()
@@ -40,6 +49,7 @@ class Client():
 
         self.connect_success = True
         self.connection = s
+        self.heartbeat()
 
     def send_message(self,message,to_uid):
         if not self.connect_success:
